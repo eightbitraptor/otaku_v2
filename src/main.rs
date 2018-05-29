@@ -19,7 +19,7 @@ fn main() {
     catalogue::bootstrap(catalogue_db)
         .expect("could not bootstrap catalogue db");
 
-    downloader::download_image(
+    downloader::fetch_image(
         "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
         "/tmp",
     ).expect("could not download image");
