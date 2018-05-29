@@ -3,13 +3,22 @@ extern crate sqlite;
 use error::OtakuError;
 use std::path::PathBuf;
 
-pub fn open(catalogue_db_path: PathBuf) -> Result<sqlite::Connection, OtakuError> {
-    let catalogue = sqlite::open(catalogue_db_path)?;
-    Ok(catalogue)
+pub struct Catalogue {
+    connection: sqlite::Connection,
 }
 
-pub fn bootstrap(catalogue_db: sqlite::Connection) -> Result<(), OtakuError> {
-    catalogue_db.execute(include_str!("bootstrap/bootstrap.sql"))?;
+pub fn open(catalogue_db_path: PathBuf) -> Result<Catalogue, OtakuError> {
+    let catalogue = sqlite::open(catalogue_db_path)?;
+    Ok(Catalogue {
+        connection: catalogue,
+    })
+}
+
+
+pub fn bootstrap(catalogue_db: Catalogue) -> Result<(), OtakuError> {
+    catalogue_db
+        .connection
+        .execute(include_str!("bootstrap/bootstrap.sql"))?;
     Ok(())
 }
 
