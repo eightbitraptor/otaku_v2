@@ -5,8 +5,10 @@ authors = ["Matt Valentine-House <matt@eightbitraptor.com>"]
 
 [dependencies]
 base64 = "0.9.1"
-image = "0.19.0"
 reqwest = "0.8.5"
 sqlite = "0.23.9"
 xdg = "^2.1"
+
+[dev-dependencies]
+image = "0.19.0"
 nanoid = "~0.2.0"
