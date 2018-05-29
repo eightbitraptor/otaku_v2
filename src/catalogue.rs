@@ -8,8 +8,9 @@ pub fn open(catalogue_db_path: PathBuf) -> Result<sqlite::Connection, OtakuError
     Ok(catalogue)
 }
 
-pub fn bootstrap(catalogue_db: sqlite::Connection) -> Result<i32, OtakuError> {
-    Ok(32)
+pub fn bootstrap(catalogue_db: sqlite::Connection) -> Result<(), OtakuError> {
+    catalogue_db.execute(include_str!("bootstrap/bootstrap.sql"))?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -25,6 +26,16 @@ mod tests {
         let sqlite = open(PathBuf::from(&test_db_file));
 
         assert!(sqlite.is_ok());
+
+        fs::remove_file(&test_db_file).unwrap();
+    }
+
+    #[test]
+    fn test_we_can_bootstrap_the_db() {
+        let test_db_file = Path::join(&env::temp_dir(), "test2.sqlite");
+        let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
+
+        assert!(bootstrap(sqlite).is_ok());
 
         fs::remove_file(&test_db_file).unwrap();
     }
