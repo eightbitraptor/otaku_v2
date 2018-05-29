@@ -1,4 +1,5 @@
 extern crate reqwest;
+extern crate sqlite;
 
 use std::convert;
 use std::error;
@@ -29,6 +30,12 @@ impl convert::From<reqwest::Error> for OtakuError {
 
 impl convert::From<io::Error> for OtakuError {
     fn from(_error: io::Error) -> OtakuError{
+        OtakuError{}
+    }
+}
+
+impl convert::From<sqlite::Error> for OtakuError {
+    fn from(_error: sqlite::Error) -> OtakuError{
         OtakuError{}
     }
 }
