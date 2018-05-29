@@ -3,8 +3,19 @@ extern crate reqwest;
 use base64::encode;
 use error::OtakuError;
 use std::fs;
+use catalogue::Catalogue;
 
-pub fn fetch_image(url: &str, download_dir: &str) -> Result<String, OtakuError> {
+pub fn download_image(
+    url: &str,
+    download_dir: &str,
+    catalogue: &Catalogue,
+) -> Result<i32, OtakuError> {
+    let image_name = fetch_image(url, download_dir)?;
+    catalogue.insert_image(&image_name, "2018-01-01")?;
+    Ok(0)
+}
+
+fn fetch_image(url: &str, download_dir: &str) -> Result<String, OtakuError> {
     let image_name = encode(url);
     let download_name = format!("{}/{}", download_dir, image_name);
     let mut image = reqwest::get(url)?;

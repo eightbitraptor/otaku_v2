@@ -21,8 +21,9 @@ fn main() {
             .expect("could not bootstrap catalogue db");
     }
 
-    downloader::fetch_image(
+    downloader::download_image(
         "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
         "/tmp",
+        &catalogue
     ).expect("could not download image");
 }

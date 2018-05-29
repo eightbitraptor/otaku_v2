@@ -9,6 +9,22 @@ pub struct Catalogue {
 }
 
 impl Catalogue {
+    pub fn insert_image(&self, image_name: &str, created_date: &str) -> Result<i32, OtakuError> {
+        let mut statement = self
+            .connection
+            .prepare(include_str!("queries/insert_image.sql"))
+            .unwrap();
+
+        statement.bind(1, image_name)?;
+        statement.bind(2, created_date)?;
+
+        match statement.next() {
+            Ok(State::Done) => return Ok(0),
+            Ok(_) => return Err(OtakuError{}),
+            Err(e) => return Err(OtakuError::from(e))
+        }
+    }
+
     pub fn is_bootstrapped(&self) -> bool {
         let mut statement = match self
             .connection
@@ -114,5 +130,19 @@ mod tests {
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result == false);
+    }
+
+    #[test]
+    fn test_inserting_images_into_the_catalogue() {
+        let test_db_file = generate_db_filename();
+        let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
+
+        bootstrap(&sqlite).unwrap();
+
+        let result = sqlite
+            .insert_image("my_image_name", "2018-01-01");
+        fs::remove_file(&test_db_file).unwrap();
+
+        assert!(result.is_ok());
     }
 }
