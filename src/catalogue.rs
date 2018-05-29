@@ -43,14 +43,21 @@ pub fn bootstrap(catalogue_db: &Catalogue) -> Result<(), OtakuError> {
 
 #[cfg(test)]
 mod tests {
+    extern crate nanoid;
+
     use super::*;
     use std::env;
     use std::fs;
     use std::path::{Path, PathBuf};
 
+    fn generate_db_filename() -> PathBuf {
+        let generated_name = nanoid::simple();
+        Path::join(&env::temp_dir(), format!("{}.sqlite", generated_name))
+    }
+
     #[test]
     fn test_we_can_open_the_db() {
-        let test_db_file = Path::join(&env::temp_dir(), "test.sqlite");
+        let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file));
 
         let result = sqlite.is_ok();
@@ -61,7 +68,7 @@ mod tests {
 
     #[test]
     fn test_we_can_bootstrap_the_db() {
-        let test_db_file = Path::join(&env::temp_dir(), "test2.sqlite");
+        let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
 
         let result = bootstrap(&sqlite).is_ok();
@@ -72,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_is_bootstrapped_when_db_is_bootstrapped() {
-        let test_db_file = Path::join(&env::temp_dir(), "test3.sqlite");
+        let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
         bootstrap(&sqlite).expect("problems bootstrapping db");
 
@@ -84,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_is_bootstrapped_when_db_is_not_bootstrapped() {
-        let test_db_file = Path::join(&env::temp_dir(), "test4.sqlite");
+        let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
 
         let result = sqlite.is_bootstrapped();
@@ -95,7 +102,7 @@ mod tests {
 
     #[test]
     fn test_is_bootstrapped_when_db_is_badly_bootstrapped() {
-        let test_db_file = Path::join(&env::temp_dir(), "test5.sqlite");
+        let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
 
         sqlite
