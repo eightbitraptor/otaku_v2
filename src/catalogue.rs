@@ -34,9 +34,10 @@ mod tests {
         let test_db_file = Path::join(&env::temp_dir(), "test.sqlite");
         let sqlite = open(PathBuf::from(&test_db_file));
 
-        assert!(sqlite.is_ok());
-
+        let result = sqlite.is_ok();
         fs::remove_file(&test_db_file).unwrap();
+
+        assert!(result == true);
     }
 
     #[test]
@@ -44,8 +45,9 @@ mod tests {
         let test_db_file = Path::join(&env::temp_dir(), "test2.sqlite");
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
 
-        assert!(bootstrap(sqlite).is_ok());
-
+        let result = bootstrap(sqlite).is_ok();
         fs::remove_file(&test_db_file).unwrap();
+
+        assert!(result == true);
     }
 }
