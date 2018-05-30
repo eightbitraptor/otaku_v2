@@ -28,7 +28,7 @@ impl Catalogue {
     pub fn is_bootstrapped(&self) -> bool {
         let mut statement = match self
             .connection
-            .prepare("SELECT MAX(id) FROM schema_versions;")
+            .prepare(include_str!("queries/latest_schema_version.sql"))
         {
             Ok(res) => res,
             Err(_) => return false,
