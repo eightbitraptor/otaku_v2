@@ -17,7 +17,7 @@ pub fn download_image(
 
 fn fetch_image(url: &str, download_dir: &str) -> Result<String, OtakuError> {
     let image_name = encode(url);
-    let download_name = format!("{}/{}", download_dir, image_name);
+    let download_name = format!("{}/{}", download_dir, &image_name);
     let mut image = reqwest::get(url)?;
     let mut buffer: Vec<u8> = vec![];
 
@@ -25,7 +25,7 @@ fn fetch_image(url: &str, download_dir: &str) -> Result<String, OtakuError> {
 
     fs::write(&download_name, buffer)?;
 
-    return Ok(download_name);
+    return Ok(image_name);
 }
 
 #[cfg(test)]
@@ -43,7 +43,7 @@ mod tests {
         let directory = "/tmp";
         let img_file_name = fetch_image(&img_url, &directory).expect("failed to download file");
 
-        assert!(Path::new(&img_file_name).exists());
+        assert!(Path::new(&directory).join(&img_file_name).exists());
     }
 
     #[test]
@@ -57,7 +57,7 @@ mod tests {
 
         let img_file_name = fetch_image(&img_url, &directory).expect("failed to download file");
 
-        let mut f = File::open(&img_file_name).unwrap();
+        let mut f = File::open(Path::new(&directory).join(&img_file_name)).unwrap();
         let mut buffer = [0; 10];
         f.read_exact(&mut buffer)
             .expect("Failed to read bytes into test buffer");
