@@ -16,7 +16,7 @@ fn main() {
     let catalogue = catalogue::open(catalogue_db_path)
         .expect("could not open catalogue db");
 
-    if !catalogue.is_bootstrapped() {
+    if !catalogue.is_bootstrapped().is_ok() {
         catalogue::bootstrap(&catalogue)
             .expect("could not bootstrap catalogue db");
     }

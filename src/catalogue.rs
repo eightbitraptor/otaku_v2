@@ -25,21 +25,17 @@ impl Catalogue {
         }
     }
 
-    pub fn is_bootstrapped(&self) -> bool {
-        let mut statement = match self
+    pub fn is_bootstrapped(&self) -> Result<(), OtakuError> {
+        let mut statement = self
             .connection
-            .prepare(include_str!("queries/latest_schema_version.sql"))
-        {
-            Ok(res) => res,
-            Err(_) => return false,
-        };
+            .prepare(include_str!("bootstrap/check_bootstrap.sql"))?;
 
-        let value = match statement.next().unwrap() {
-            State::Row => statement.read::<i64>(0).unwrap(),
-            State::Done => 0,
-        };
+        let value = statement.next().and_then(|_| statement.read::<i64>(0));
 
-        value > 0
+        match value {
+            Ok(1) => Ok(()),
+            _ => Err(OtakuError{})
+        }
     }
 }
 
@@ -102,7 +98,7 @@ mod tests {
         let result = sqlite.is_bootstrapped();
         fs::remove_file(&test_db_file).unwrap();
 
-        assert!(result == true);
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -113,7 +109,7 @@ mod tests {
         let result = sqlite.is_bootstrapped();
         fs::remove_file(&test_db_file).unwrap();
 
-        assert!(result == false);
+        assert!(result.is_err());
     }
 
     #[test]
@@ -129,7 +125,7 @@ mod tests {
         let result = sqlite.is_bootstrapped();
         fs::remove_file(&test_db_file).unwrap();
 
-        assert!(result == false);
+        assert!(result.is_err());
     }
 
     #[test]
