@@ -3,11 +3,12 @@ extern crate reqwest;
 use base64::encode;
 use error::OtakuError;
 use std::fs;
+use std::path::PathBuf;
 use catalogue::Catalogue;
 
 pub fn download_image(
     url: &str,
-    download_dir: &str,
+    download_dir: &PathBuf,
     catalogue: &Catalogue,
 ) -> Result<i32, OtakuError> {
     let image_name = fetch_image(url, download_dir)?;
@@ -15,9 +16,9 @@ pub fn download_image(
     Ok(0)
 }
 
-fn fetch_image(url: &str, download_dir: &str) -> Result<String, OtakuError> {
+fn fetch_image(url: &str, download_dir: &PathBuf) -> Result<String, OtakuError> {
     let image_name = encode(url);
-    let download_name = format!("{}/{}", download_dir, &image_name);
+    let download_name = download_dir.join(&image_name);
     let mut image = reqwest::get(url)?;
     let mut buffer: Vec<u8> = vec![];
 
@@ -40,7 +41,7 @@ mod tests {
         let img_url =
             "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
 
-        let directory = "/tmp";
+        let directory = PathBuf::from("/tmp");
         let img_file_name = fetch_image(&img_url, &directory).expect("failed to download file");
 
         assert!(Path::new(&directory).join(&img_file_name).exists());
@@ -53,7 +54,7 @@ mod tests {
 
         let img_url =
             "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
-        let directory = "/tmp";
+        let directory = PathBuf::from("/tmp");
 
         let img_file_name = fetch_image(&img_url, &directory).expect("failed to download file");
 
