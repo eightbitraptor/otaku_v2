@@ -13,6 +13,17 @@ pub fn bootstrap(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
+pub fn db_state(conn: &Connection) -> Result<()> {
+    let mut statement = conn.prepare(include_str!("bootstrap/check_bootstrap.sql"))?;
+
+    let value = statement.next().and_then(|_| statement.read::<i64>(0));
+
+    match value {
+        Ok(1) => Ok(()),
+        _ => Err(OtakuError {}),
+    }
+}
+
 pub fn insert_image(conn: &Connection, name: &str, created: &str) -> Result<()> {
     let mut statement = conn
         .prepare(include_str!("queries/insert_image.sql"))
@@ -28,16 +39,6 @@ pub fn insert_image(conn: &Connection, name: &str, created: &str) -> Result<()> 
     }
 }
 
-pub fn is_bootstrapped(conn: &Connection) -> Result<()> {
-    let mut statement = conn.prepare(include_str!("bootstrap/check_bootstrap.sql"))?;
-
-    let value = statement.next().and_then(|_| statement.read::<i64>(0));
-
-    match value {
-        Ok(1) => Ok(()),
-        _ => Err(OtakuError {}),
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -76,30 +77,30 @@ mod tests {
     }
 
     #[test]
-    fn test_is_bootstrapped_when_db_is_bootstrapped() {
+    fn test_db_state_when_db_db_state() {
         let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
         bootstrap(&sqlite).expect("problems bootstrapping db");
 
-        let result = is_bootstrapped(&sqlite);
+        let result = db_state(&sqlite);
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result.is_ok());
     }
 
     #[test]
-    fn test_is_bootstrapped_when_db_is_not_bootstrapped() {
+    fn test_db_state_when_db_is_not_bootstrapped() {
         let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
 
-        let result = is_bootstrapped(&sqlite);
+        let result = db_state(&sqlite);
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result.is_err());
     }
 
     #[test]
-    fn test_is_bootstrapped_when_db_is_badly_bootstrapped() {
+    fn test_db_state_when_db_is_badly_bootstrapped() {
         let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
 
@@ -107,7 +108,7 @@ mod tests {
             .execute("CREATE TABLE schema_versions (id INT)")
             .unwrap();
 
-        let result = is_bootstrapped(&sqlite);
+        let result = db_state(&sqlite);
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result.is_err());

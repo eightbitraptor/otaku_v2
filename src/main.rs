@@ -20,7 +20,7 @@ fn main() {
 
     let cat_conn = catalogue::open(catalogue_db_path).expect("could not open catalogue db");
 
-    if !catalogue::is_bootstrapped(&cat_conn).is_ok() {
+    if !catalogue::db_state(&cat_conn).is_ok() {
         catalogue::bootstrap(&cat_conn).expect("could not bootstrap catalogue db");
     }
 
