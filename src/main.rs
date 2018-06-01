@@ -1,4 +1,5 @@
 extern crate base64;
+extern crate sqlite;
 extern crate xdg;
 
 mod catalogue;
@@ -17,17 +18,14 @@ fn main() {
         .place_data_file("catalogue.sqlite")
         .expect("could not get data path");
 
-    let catalogue = catalogue::open(catalogue_db_path)
-        .expect("could not open catalogue db");
+    let cat_conn = catalogue::open(catalogue_db_path).expect("could not open catalogue db");
 
-    if !catalogue.is_bootstrapped().is_ok() {
-        catalogue::bootstrap(&catalogue)
-            .expect("could not bootstrap catalogue db");
+    if !catalogue::is_bootstrapped(&cat_conn).is_ok() {
+        catalogue::bootstrap(&cat_conn).expect("could not bootstrap catalogue db");
     }
 
-    downloader::download_image(
-        "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
-        &catalogue_data_path,
-        &catalogue
-    ).expect("could not download image");
+    let image = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
+    downloader::fetch_image(image, &catalogue_data_path)
+        .and_then(|image| catalogue::insert_image(&cat_conn, &image, "2018-01-01"))
+        .expect("could not download image");
 }

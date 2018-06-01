@@ -1,56 +1,42 @@
-extern crate sqlite;
-
-use self::sqlite::State;
-use error::{OtakuError, Result};
+use error::*;
+use sqlite;
+use sqlite::{Connection, State};
 use std::path::PathBuf;
 
-pub struct Catalogue {
-    connection: sqlite::Connection,
+pub fn open(catalogue_db_path: PathBuf) -> Result<Connection> {
+    let conn = sqlite::open(catalogue_db_path)?;
+    Ok(conn)
 }
 
-impl Catalogue {
-    pub fn insert_image(&self, image_name: &str, created_date: &str) -> Result<i32> {
-        let mut statement = self
-            .connection
-            .prepare(include_str!("queries/insert_image.sql"))
-            .unwrap();
-
-        statement.bind(1, image_name)?;
-        statement.bind(2, created_date)?;
-
-        match statement.next() {
-            Ok(State::Done) => return Ok(0),
-            Ok(_) => return Err(OtakuError {}),
-            Err(e) => return Err(OtakuError::from(e)),
-        }
-    }
-
-    pub fn is_bootstrapped(&self) -> Result<()> {
-        let mut statement = self
-            .connection
-            .prepare(include_str!("bootstrap/check_bootstrap.sql"))?;
-
-        let value = statement.next().and_then(|_| statement.read::<i64>(0));
-
-        match value {
-            Ok(1) => Ok(()),
-            _ => Err(OtakuError {}),
-        }
-    }
-}
-
-pub fn open(catalogue_db_path: PathBuf) -> Result<Catalogue> {
-    let catalogue = sqlite::open(catalogue_db_path)?;
-    Ok(Catalogue {
-        connection: catalogue,
-    })
-}
-
-pub fn bootstrap(catalogue_db: &Catalogue) -> Result<()> {
-    catalogue_db
-        .connection
-        .execute(include_str!("bootstrap/bootstrap.sql"))?;
+pub fn bootstrap(conn: &Connection) -> Result<()> {
+    conn.execute(include_str!("bootstrap/bootstrap.sql"))?;
     Ok(())
+}
+
+pub fn insert_image(conn: &Connection, name: &str, created: &str) -> Result<()> {
+    let mut statement = conn
+        .prepare(include_str!("queries/insert_image.sql"))
+        .unwrap();
+
+    statement.bind(1, name)?;
+    statement.bind(2, created)?;
+
+    match statement.next() {
+        Ok(State::Done) => return Ok(()),
+        Ok(_) => return Err(OtakuError {}),
+        Err(e) => return Err(OtakuError::from(e)),
+    }
+}
+
+pub fn is_bootstrapped(conn: &Connection) -> Result<()> {
+    let mut statement = conn.prepare(include_str!("bootstrap/check_bootstrap.sql"))?;
+
+    let value = statement.next().and_then(|_| statement.read::<i64>(0));
+
+    match value {
+        Ok(1) => Ok(()),
+        _ => Err(OtakuError {}),
+    }
 }
 
 #[cfg(test)]
@@ -95,7 +81,7 @@ mod tests {
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
         bootstrap(&sqlite).expect("problems bootstrapping db");
 
-        let result = sqlite.is_bootstrapped();
+        let result = is_bootstrapped(&sqlite);
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result.is_ok());
@@ -106,7 +92,7 @@ mod tests {
         let test_db_file = generate_db_filename();
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
 
-        let result = sqlite.is_bootstrapped();
+        let result = is_bootstrapped(&sqlite);
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result.is_err());
@@ -118,11 +104,10 @@ mod tests {
         let sqlite = open(PathBuf::from(&test_db_file)).unwrap();
 
         sqlite
-            .connection
             .execute("CREATE TABLE schema_versions (id INT)")
             .unwrap();
 
-        let result = sqlite.is_bootstrapped();
+        let result = is_bootstrapped(&sqlite);
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result.is_err());
@@ -135,7 +120,7 @@ mod tests {
 
         bootstrap(&sqlite).unwrap();
 
-        let result = sqlite.insert_image("my_image_name", "2018-01-01");
+        let result = insert_image(&sqlite, "my_image_name", "2018-01-01");
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result.is_ok());

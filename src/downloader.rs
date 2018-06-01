@@ -1,18 +1,11 @@
 extern crate reqwest;
 
 use base64::encode;
-use catalogue::Catalogue;
 use error::Result;
 use std::fs;
 use std::path::PathBuf;
 
-pub fn download_image(url: &str, download_dir: &PathBuf, catalogue: &Catalogue) -> Result<i32> {
-    let image_name = fetch_image(url, download_dir)?;
-    catalogue.insert_image(&image_name, "2018-01-01")?;
-    Ok(0)
-}
-
-fn fetch_image(url: &str, download_dir: &PathBuf) -> Result<String> {
+pub fn fetch_image(url: &str, download_dir: &PathBuf) -> Result<String> {
     let image_name = encode(url);
     let download_name = download_dir.join(&image_name);
     let mut image = reqwest::get(url)?;
