@@ -1,7 +1,7 @@
 extern crate sqlite;
 
 use self::sqlite::State;
-use error::OtakuError;
+use error::{OtakuError, Result};
 use std::path::PathBuf;
 
 pub struct Catalogue {
@@ -9,7 +9,7 @@ pub struct Catalogue {
 }
 
 impl Catalogue {
-    pub fn insert_image(&self, image_name: &str, created_date: &str) -> Result<i32, OtakuError> {
+    pub fn insert_image(&self, image_name: &str, created_date: &str) -> Result<i32> {
         let mut statement = self
             .connection
             .prepare(include_str!("queries/insert_image.sql"))
@@ -20,12 +20,12 @@ impl Catalogue {
 
         match statement.next() {
             Ok(State::Done) => return Ok(0),
-            Ok(_) => return Err(OtakuError{}),
-            Err(e) => return Err(OtakuError::from(e))
+            Ok(_) => return Err(OtakuError {}),
+            Err(e) => return Err(OtakuError::from(e)),
         }
     }
 
-    pub fn is_bootstrapped(&self) -> Result<(), OtakuError> {
+    pub fn is_bootstrapped(&self) -> Result<()> {
         let mut statement = self
             .connection
             .prepare(include_str!("bootstrap/check_bootstrap.sql"))?;
@@ -34,19 +34,19 @@ impl Catalogue {
 
         match value {
             Ok(1) => Ok(()),
-            _ => Err(OtakuError{})
+            _ => Err(OtakuError {}),
         }
     }
 }
 
-pub fn open(catalogue_db_path: PathBuf) -> Result<Catalogue, OtakuError> {
+pub fn open(catalogue_db_path: PathBuf) -> Result<Catalogue> {
     let catalogue = sqlite::open(catalogue_db_path)?;
     Ok(Catalogue {
         connection: catalogue,
     })
 }
 
-pub fn bootstrap(catalogue_db: &Catalogue) -> Result<(), OtakuError> {
+pub fn bootstrap(catalogue_db: &Catalogue) -> Result<()> {
     catalogue_db
         .connection
         .execute(include_str!("bootstrap/bootstrap.sql"))?;
@@ -135,8 +135,7 @@ mod tests {
 
         bootstrap(&sqlite).unwrap();
 
-        let result = sqlite
-            .insert_image("my_image_name", "2018-01-01");
+        let result = sqlite.insert_image("my_image_name", "2018-01-01");
         fs::remove_file(&test_db_file).unwrap();
 
         assert!(result.is_ok());

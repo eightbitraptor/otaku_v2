@@ -6,6 +6,7 @@ use std::error;
 use std::error::Error;
 use std::fmt;
 use std::io;
+use std::result;
 
 #[derive(Debug)]
 pub struct OtakuError {}
@@ -39,3 +40,5 @@ impl convert::From<sqlite::Error> for OtakuError {
         OtakuError{}
     }
 }
+
+pub type Result<T> = result::Result<T, OtakuError>;
