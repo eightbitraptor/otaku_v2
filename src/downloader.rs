@@ -1,7 +1,8 @@
-extern crate reqwest;
-
 use base64::encode;
+use catalogue;
 use error::Result;
+use reqwest;
+use sqlite::Connection;
 use std::fs;
 use std::path::PathBuf;
 

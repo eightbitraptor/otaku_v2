@@ -1,4 +1,5 @@
 extern crate base64;
+extern crate reqwest;
 extern crate sqlite;
 extern crate xdg;
 
