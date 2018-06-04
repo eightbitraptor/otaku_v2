@@ -5,7 +5,7 @@ use sqlite::{Connection, State};
 use std::path::PathBuf;
 
 pub struct Catalogue<'a> {
-    pub data_path: &'a PathBuf,
+    data_path: &'a PathBuf,
     conn: Connection,
 }
 
