@@ -25,8 +25,8 @@ fn main() {
         catalogue::bootstrap(&cat_conn).expect("could not bootstrap catalogue db");
     }
 
-    let image = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
-    downloader::fetch_image(image, &catalogue_data_path)
-        .and_then(|image| catalogue::insert_image(&cat_conn, &image, "2018-01-01"))
-        .expect("could not download image");
+    let image =
+        "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
+    catalogue::image_to_catalogue(&image, &cat_conn, &catalogue_data_path)
+        .expect("Image could not be downloaded");
 }

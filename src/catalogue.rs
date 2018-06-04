@@ -1,3 +1,4 @@
+use downloader;
 use error::*;
 use sqlite;
 use sqlite::{Connection, State};
@@ -24,7 +25,13 @@ pub fn db_state(conn: &Connection) -> Result<()> {
     }
 }
 
-pub fn insert_image(conn: &Connection, name: &str, created: &str) -> Result<()> {
+pub fn image_to_catalogue(image_url: &str, conn: &Connection, data_path: &PathBuf) -> Result<()> {
+    downloader::fetch_image(image_url, &data_path)
+        .and_then(|image| insert_image(&conn, &image, "2018-01-01"))?;
+    Ok(())
+}
+
+fn insert_image(conn: &Connection, name: &str, created: &str) -> Result<()> {
     let mut statement = conn
         .prepare(include_str!("queries/insert_image.sql"))
         .unwrap();
@@ -38,7 +45,6 @@ pub fn insert_image(conn: &Connection, name: &str, created: &str) -> Result<()> 
         Err(e) => return Err(OtakuError::from(e)),
     }
 }
-
 
 #[cfg(test)]
 mod tests {
