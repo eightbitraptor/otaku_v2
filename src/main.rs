@@ -21,12 +21,12 @@ fn main() {
 
     let cat = catalogue::open(&catalogue_db_path).expect("could not open catalogue db");
 
-    if !catalogue::db_state(&cat.conn).is_ok() {
-        catalogue::bootstrap(&cat.conn).expect("could not bootstrap catalogue db");
+    if !catalogue::db_state(&cat).is_ok() {
+        catalogue::bootstrap(&cat).expect("could not bootstrap catalogue db");
     }
 
     let image =
         "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
-    catalogue::image_to_catalogue(&image, &cat.conn, &catalogue_data_path)
+    catalogue::image_to_catalogue(&image, &cat)
         .expect("Image could not be downloaded");
 }
