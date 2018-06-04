@@ -4,9 +4,19 @@ use sqlite;
 use sqlite::{Connection, State};
 use std::path::PathBuf;
 
-pub fn open(catalogue_db_path: PathBuf) -> Result<Connection> {
+pub struct Catalogue<'a> {
+    pub data_path: &'a PathBuf,
+    pub conn: Connection,
+}
+
+pub fn open(catalogue_db_path: &PathBuf) -> Result<Catalogue> {
     let conn = sqlite::open(catalogue_db_path)?;
-    Ok(conn)
+
+    let catalogue = Catalogue {
+        data_path: catalogue_db_path,
+        conn: conn,
+    };
+    Ok(catalogue)
 }
 
 pub fn bootstrap(conn: &Connection) -> Result<()> {
