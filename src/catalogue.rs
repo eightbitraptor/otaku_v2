@@ -1,12 +1,56 @@
 use downloader;
 use error::*;
 use sqlite;
-use sqlite::{Connection, State};
+use sqlite::{Connection, State, Statement};
 use std::path::PathBuf;
 
 pub struct Catalogue<'a> {
     data_path: &'a PathBuf,
     conn: Connection,
+}
+
+impl<'a> Catalogue<'a> {
+    pub fn image_to_catalogue(&self, image_url: &str) -> Result<()> {
+        downloader::fetch_image(image_url, self.data_path)
+            .and_then(|image| self.insert_image(&image, "2018-01-01"))?;
+        Ok(())
+    }
+
+    pub fn bootstrap(&self) -> Result<()> {
+        self.conn.execute(include_str!("bootstrap/bootstrap.sql"))?;
+        Ok(())
+    }
+
+    pub fn db_state(&self) -> Result<()> {
+        let mut statement = self
+            .conn
+            .prepare(include_str!("bootstrap/check_bootstrap.sql"))?;
+
+        let value = statement.next().and_then(|_| statement.read::<i64>(0));
+
+        match value {
+            Ok(1) => Ok(()),
+            _ => Err(OtakuError {}),
+        }
+    }
+
+    fn insert_image(&self, name: &str, created: &str) -> Result<()> {
+        let mut statement = self.statement_from_str(include_str!("queries/insert_image.sql"))?;
+
+        statement.bind(1, name)?;
+        statement.bind(2, created)?;
+
+        match statement.next() {
+            Ok(State::Done) => return Ok(()),
+            Ok(_) => return Err(OtakuError {}),
+            Err(e) => return Err(OtakuError::from(e)),
+        }
+    }
+
+    fn statement_from_str(&self, statement: &str) -> Result<Statement> {
+        let statement = self.conn.prepare(statement)?;
+        Ok(statement)
+    }
 }
 
 pub fn open(catalogue_db_path: &PathBuf) -> Result<Catalogue> {
@@ -19,45 +63,7 @@ pub fn open(catalogue_db_path: &PathBuf) -> Result<Catalogue> {
     Ok(catalogue)
 }
 
-pub fn bootstrap(cat: &Catalogue) -> Result<()> {
-    cat.conn.execute(include_str!("bootstrap/bootstrap.sql"))?;
-    Ok(())
-}
 
-pub fn db_state(cat: &Catalogue) -> Result<()> {
-    let mut statement = cat
-        .conn
-        .prepare(include_str!("bootstrap/check_bootstrap.sql"))?;
-
-    let value = statement.next().and_then(|_| statement.read::<i64>(0));
-
-    match value {
-        Ok(1) => Ok(()),
-        _ => Err(OtakuError {}),
-    }
-}
-
-pub fn image_to_catalogue(image_url: &str, cat: &Catalogue) -> Result<()> {
-    downloader::fetch_image(image_url, cat.data_path)
-        .and_then(|image| insert_image(&cat, &image, "2018-01-01"))?;
-    Ok(())
-}
-
-fn insert_image(cat: &Catalogue, name: &str, created: &str) -> Result<()> {
-    let mut statement = cat
-        .conn
-        .prepare(include_str!("queries/insert_image.sql"))
-        .unwrap();
-
-    statement.bind(1, name)?;
-    statement.bind(2, created)?;
-
-    match statement.next() {
-        Ok(State::Done) => return Ok(()),
-        Ok(_) => return Err(OtakuError {}),
-        Err(e) => return Err(OtakuError::from(e)),
-    }
-}
 
 #[cfg(test)]
 mod tests {
